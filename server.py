@@ -57,7 +57,7 @@ class TTSRequest(BaseModel):
 
 class Segment(BaseModel):
     speaker: str
-    text: str = Field(min_length=1, max_length=5000)
+    text: str = Field(min_length=1)
 
 
 class DualTTSRequest(BaseModel):
