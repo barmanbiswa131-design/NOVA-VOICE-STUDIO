@@ -31,7 +31,7 @@ def home():
 async def voices():
     try:
         all_voices = await edge_tts.list_voices()
-        return [v for v in all_voices if v.get("Locale", "").split("-")[0] in {"bn", "hi", "en", "ne"}]
+        return [v for v in all_voices if v.get("Locale", "").lower().startswith("hi-in")]
     except Exception as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 
@@ -39,6 +39,8 @@ async def voices():
 async def make_tts(data: TTSRequest):
     if data.rate not in {"-10%", "+0%", "+10%", "+20%"}:
         raise HTTPException(status_code=400, detail="Unsupported speaking rate")
+    if not data.voice.startswith("hi-IN-"):
+        raise HTTPException(status_code=400, detail="Only Indian Hindi voices are supported")
     try:
         output = io.BytesIO()
         communicate = edge_tts.Communicate(data.text, data.voice, rate=data.rate)
@@ -59,6 +61,8 @@ async def make_dual_tts(data: DualTTSRequest):
         raise HTTPException(status_code=400, detail="Unsupported speaking rate")
     if any(seg.speaker not in {"male", "female"} for seg in data.segments):
         raise HTTPException(status_code=400, detail="Speaker must be male or female")
+    if not data.male_voice.startswith("hi-IN-") or not data.female_voice.startswith("hi-IN-"):
+        raise HTTPException(status_code=400, detail="Only Indian Hindi voices are supported")
     try:
         output = io.BytesIO()
         for seg in data.segments:
