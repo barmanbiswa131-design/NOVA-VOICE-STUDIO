@@ -1,8 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080d19"><title>NOVA Voice Studio</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d19">
+<title>NOVA Voice Studio</title>
 <style>
 :root{color-scheme:dark;--bg:#080d19;--panel:#111a2b;--line:#293751;--muted:#9aa9c0;--cyan:#65e2dc;--violet:#9d8cff;--white:#f4f7ff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% -10%,#29305b 0,transparent 42%),var(--bg);color:var(--white);font:15px Inter,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
@@ -14,36 +16,42 @@ textarea,select,input{width:100%;border:1px solid #34445e;background:#0a1220;col
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.field label{display:block;font-size:11px;font-weight:800;letter-spacing:1.2px;color:#c4d0e3;margin:0 0 8px}
 .modebar{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#0a1220;padding:6px;border:1px solid var(--line);border-radius:14px}.modebar button{background:transparent;color:#9eacc2;border:1px solid transparent;padding:12px 8px;border-radius:10px;font-size:13px;font-weight:750}.modebar button.active{background:linear-gradient(100deg,#193c4a,#29284a);border-color:#47627c;color:#fff}
 .actions{display:flex;gap:10px;margin-top:17px}.btn{border:0;border-radius:13px;padding:14px 17px;font-size:14px;font-weight:800;cursor:pointer}.primary{flex:1;background:linear-gradient(100deg,var(--cyan),#a8a0ff);color:#101629}.secondary{background:#202d44;color:#f4f7ff;border:1px solid #3a4a64}.btn:disabled{opacity:.55;cursor:wait}
-.status{color:var(--muted);font-size:13px;line-height:1.5;min-height:20px;margin-top:13px}.status.error{color:#ff9a9a}.status.ok{color:#83e8c2}audio{width:100%;margin-top:15px}.api{display:flex;gap:9px;align-items:center}.api input{min-width:0}.api button{white-space:nowrap}.footer{text-align:center;color:#71819b;font-size:11px;letter-spacing:.5px;margin-top:25px}[hidden]{display:none!important}
-@media(max-width:560px){main{padding:22px 14px 40px}.panel{padding:17px;border-radius:19px}.grid{grid-template-columns:1fr;gap:13px}.actions{flex-direction:column}.actions .btn{width:100%}.api{align-items:stretch;flex-direction:column}.api button{width:100%}textarea{min-height:170px}}
-</style></head>
-<body><main>
+.status{color:var(--muted);font-size:13px;line-height:1.5;min-height:20px;margin-top:13px}.status.error{color:#ff9a9a}.status.ok{color:#83e8c2}audio{width:100%;margin-top:15px}.api{display:flex;gap:9px;align-items:center}.api input{min-width:0}.api button{white-space:nowrap}.voicecards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.voicecard{border:1px solid var(--line);background:#0a1220;border-radius:14px;padding:13px}.voicecard b{display:block;margin-bottom:5px}.voicecard span{font-size:12px;color:var(--muted);line-height:1.5}.footer{text-align:center;color:#71819b;font-size:11px;letter-spacing:.5px;margin-top:25px}[hidden]{display:none!important}
+@media(max-width:560px){main{padding:22px 14px 40px}.panel{padding:17px;border-radius:19px}.grid,.voicecards{grid-template-columns:1fr;gap:13px}.actions{flex-direction:column}.actions .btn{width:100%}.api{align-items:stretch;flex-direction:column}.api button{width:100%}textarea{min-height:170px}}
+</style>
+</head>
+<body>
+<main>
 <header class="top"><div class="logo">N</div><div><div class="brand">NOVA VOICE STUDIO</div><div class="subbrand">HINDI NARRATION WORKSPACE</div></div></header>
-<div class="eyebrow">AI VOICE GENERATOR · HINDI ONLY</div><h1>Give your script<br><span>a natural voice.</span></h1><p class="intro">Create Hindi narration with a male narrator, a female co-host, or both in one conversation.</p>
+<div class="eyebrow">GEMINI 3.8 FLASH TTS · FIXED VOICES</div>
+<h1>Give your script<br><span>a natural voice.</span></h1>
+<p class="intro">Two permanent Hindi narrator voices with expressive delivery for science stories, Shorts and documentary narration.</p>
 <section class="panel">
-<div class="section-title">YOUR SCRIPT</div><textarea id="script" maxlength="5000" placeholder="अपनी हिंदी स्क्रिप्ट यहाँ लिखें या पेस्ट करें..."></textarea>
-<div class="hint count"><span>Use Devanagari Hindi for better pronunciation.</span><span><b id="count">0</b>/5000</span></div>
+<div class="section-title">YOUR SCRIPT</div>
+<textarea id="script" maxlength="5000" placeholder="अपनी हिंदी स्क्रिप्ट यहाँ लिखें या पेस्ट करें..."></textarea>
+<div class="hint count"><span>Use Devanagari Hindi. Emotion tags like [curiosity], [suspense], [excited], [long pause] are optional.</span><span><b id="count">0</b>/5000</span></div>
 </section>
 <section class="panel">
 <div class="section-title">VOICE SETTINGS</div>
 <div class="field"><label>VOICE MODE</label><div class="modebar"><button type="button" id="singleTab" class="active">Single voice</button><button type="button" id="dualTab">Dual conversation</button></div></div>
 <div class="grid" style="margin-top:16px">
-<div class="field" id="genderWrap"><label for="gender">SPEAKER</label><select id="gender"><option value="male">Male narrator</option><option value="female">Female narrator</option></select></div>
-<div class="field" id="voiceWrap"><label for="voice">VOICE</label><select id="voice"><option value="">Connect TTS server first</option></select></div>
-<div class="field" id="maleWrap" hidden><label for="maleVoice">MALE · NARRATOR</label><select id="maleVoice"><option value="">Connect TTS server first</option></select><div class="hint">Deep, warm, steady Hindi narration.</div></div>
-<div class="field" id="femaleWrap" hidden><label for="femaleVoice">FEMALE · CO-HOST</label><select id="femaleVoice"><option value="">Connect TTS server first</option></select><div class="hint">Clear, warm, expressive Hindi delivery.</div></div>
-<div class="field"><label for="rate">SPEAKING SPEED</label><select id="rate"><option value="-10%">Slow</option><option value="+0%" selected>Normal</option><option value="+10%">Fast</option><option value="+20%">Very fast</option></select></div>
+<div class="field" id="genderWrap"><label for="gender">FIXED VOICE</label><select id="gender"><option value="male">Male · Charon</option><option value="female">Female · Kore</option></select></div>
+<div class="field"><label for="rate">SPEAKING PACE</label><select id="rate"><option value="-10%">Slow and dramatic</option><option value="+0%" selected>Natural</option><option value="+10%">Energetic</option><option value="+20%">Fast</option></select></div>
 </div>
-<div class="hint" id="formatHint">Single voice: paste a Hindi script. Choose Male or Female speaker above.</div>
-<div class="actions"><button class="btn secondary" id="preview">▶ Preview</button><button class="btn primary" id="generate">Generate MP3 ↓</button></div>
-<div class="status" id="status">Connect your TTS server to load Hindi Neural voices and generate MP3 audio.</div><audio id="player" controls hidden></audio>
+<div class="voicecards" id="voiceCards">
+<div class="voicecard"><b>♂ MALE · CHARON</b><span>Warm, deep, confident science-documentary narrator. Fixed voice and permanent style prompt.</span></div>
+<div class="voicecard"><b>♀ FEMALE · KORE</b><span>Warm, bright, curious and expressive co-host. Fixed voice and permanent style prompt.</span></div>
+</div>
+<div class="hint" id="formatHint">Single voice: choose Charon or Kore. NOVA keeps the selected voice identity and applies its saved style prompt.</div>
+<div class="actions"><button class="btn secondary" id="preview">▶ Preview</button><button class="btn primary" id="generate">Generate WAV ↓</button></div>
+<div class="status" id="status">Connecting to NOVA TTS server…</div>
+<audio id="player" controls hidden></audio>
 </section>
-<section class="panel"><div class="section-title">TTS SERVER</div><div class="api"><input id="endpoint" type="url" value="https://nova-hindi-tts-wbc1.onrender.com" placeholder="https://nova-hindi-tts-wbc1.onrender.com"><button class="btn secondary" id="connect">Connect</button></div><div class="hint">Required for MP3 generation. Your script and audio are not stored by this website.</div></section>
-<div class="footer">NOVA VOICE STUDIO · HINDI ONLY · NO ACCOUNT · NO HISTORY</div>
+<section class="panel"><div class="section-title">TTS SERVER</div><div class="api"><input id="endpoint" type="url" value="https://nova-hindi-tts-wbc1.onrender.com" placeholder="https://nova-hindi-tts-wbc1.onrender.com"><button class="btn secondary" id="connect">Connect</button></div><div class="hint">Gemini API key stays on the server. Scripts and audio are not stored by this website.</div></section>
+<div class="footer">NOVA VOICE STUDIO · CHARON + KORE · NO ACCOUNT · NO HISTORY</div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let voices=[],mode="single";
-const rateValue=()=>({"-10%":.88,"+0%":1,"+10%":1.1,"+20%":1.2})[$("rate").value];
+const $=id=>document.getElementById(id);let mode="single";
 function status(t,type=""){ $("status").textContent=t;$("status").className="status "+type}
 $("script").addEventListener("input",()=> $("count").textContent=$("script").value.length);
 const SERVER_KEY="nova_voice_server_url";
@@ -51,50 +59,39 @@ function endpoint(){return $("endpoint").value.trim().replace(/\/$/,"")}
 function saveEndpoint(){const value=endpoint();if(value)localStorage.setItem(SERVER_KEY,value);else localStorage.removeItem(SERVER_KEY)}
 async function connectServer(){
  if(!endpoint()){status("Enter your TTS server address first.","error");return}
- saveEndpoint();
- const b=$("connect");b.disabled=true;b.textContent="Connecting…";
- try{const r=await fetch(endpoint()+"/voices",{cache:"no-store"});if(!r.ok)throw Error("Server returned "+r.status);voices=await r.json();fillServerVoices();status("Connected. Hindi voices loaded. Server address saved on this device.","ok")}
+ saveEndpoint();const b=$("connect");b.disabled=true;b.textContent="Connecting…";
+ try{const r=await fetch(endpoint()+"/voices",{cache:"no-store"});if(!r.ok)throw Error("Server returned "+r.status);const v=await r.json();if(v.engine!=="gemini-3.8-flash-tts")throw Error("The server is not running the new Gemini TTS engine yet.");status("Connected. Fixed Charon and Kore voices are ready.","ok")}
  catch(e){status("Connection failed: "+e.message,"error")}
  finally{b.disabled=false;b.textContent="Connect"}
 }
-$("endpoint").addEventListener("change",saveEndpoint);
-$("endpoint").addEventListener("blur",saveEndpoint);
-function setMode(next){mode=next;$("singleTab").classList.toggle("active",mode==="single");$("dualTab").classList.toggle("active",mode==="dual");$("genderWrap").hidden=mode==="dual";$("voiceWrap").hidden=mode==="dual";$("maleWrap").hidden=mode!=="dual";$("femaleWrap").hidden=mode!=="dual";$("formatHint").textContent=mode==="dual"?"Dual format: put each speaker on a separate line, beginning with MALE: or FEMALE:.":"Single voice: paste a Hindi script and choose Male or Female speaker.";if(voices.length)fillServerVoices()}
-$("singleTab").onclick=()=>setMode("single");$("dualTab").onclick=()=>setMode("dual");
-function fillSelect(id,gender){const found=voices.filter(v=>(v.Locale||"").toLowerCase().startsWith("hi-in")&&(v.Gender||"").toLowerCase()===gender);const el=$(id);el.innerHTML="";found.forEach(v=>{const o=document.createElement("option");o.value=v.ShortName;o.textContent=(v.FriendlyName||v.ShortName)+(v.ShortName.includes("Neural")?" · Neural":"");el.append(o)});if(!found.length){const o=document.createElement("option");o.value="";o.textContent="No Hindi "+gender+" voice returned by server";el.append(o);return}const preferred=gender==="male"?"hi-IN-MadhurNeural":"hi-IN-SwaraNeural";if(found.some(v=>v.ShortName===preferred))el.value=preferred}
-function fillServerVoices(){fillSelect("voice",$("gender").value);fillSelect("maleVoice","male");fillSelect("femaleVoice","female")}
-$("gender").onchange=()=>{if(voices.length)fillSelect("voice",$("gender").value)};
+$("endpoint").addEventListener("change",saveEndpoint);$("endpoint").addEventListener("blur",saveEndpoint);
+const savedServer=localStorage.getItem(SERVER_KEY)||"https://nova-hindi-tts-wbc1.onrender.com";$("endpoint").value=savedServer;
 $("connect").onclick=connectServer;
-const savedServer=localStorage.getItem(SERVER_KEY)||"https://nova-hindi-tts-wbc1.onrender.com";
-$("endpoint").value=savedServer;
-connectServer();
-async function makePreview(){
- const text=$("script").value.trim();
- if(!text){status("Enter your Hindi script first.","error");return}
- if(!endpoint()){status("Connect the TTS server first. Preview will then use the exact selected Neural voices.","error");return}
- let route="/tts",payload;
- if(mode==="single"){
-  const voice=$("voice").value;
-  if(!voice){status("No selected Hindi voice. Reconnect the server.","error");return}
-  payload={text,voice,gender:$("gender").value,rate:$("rate").value};
- }else{
-  const lines=text.split(/\\r?\\n/).map(line=>{const m=line.match(/^\\s*(MALE|FEMALE)\\s*:\\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);
-  if(!lines.length||lines.length!==text.split(/\\r?\\n/).filter(x=>x.trim()).length){status("Every non-empty line must start with MALE: or FEMALE:.","error");return}
-  if(!$("maleVoice").value||!$("femaleVoice").value){status("Reconnect the server and select both speakers.","error");return}
-  route="/tts/dual";payload={segments:lines,male_voice:$("maleVoice").value,female_voice:$("femaleVoice").value,rate:$("rate").value};
- }
- const b=$("preview");b.disabled=true;b.textContent="Preparing preview…";
- try{
-  const r=await fetch(endpoint()+route,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  if(!r.ok)throw Error(await r.text());
-  const blob=await r.blob();if(!blob.size)throw Error("Empty audio returned.");
-  const url=URL.createObjectURL(blob);$("player").src=url;$("player").hidden=false;
-  await $("player").play();status("Preview is using the exact server-selected Hindi voice(s).","ok");
- }catch(e){status("Preview failed: "+e.message,"error")}
- finally{b.disabled=false;b.textContent="▶ Preview"}
+$("singleTab").onclick=()=>{mode="single";$("singleTab").classList.add("active");$("dualTab").classList.remove("active");$("genderWrap").hidden=false;$("voiceCards").hidden=false;$("formatHint").textContent="Single voice: choose Charon or Kore. NOVA keeps the selected voice identity and applies its saved style prompt."};
+$("dualTab").onclick=()=>{mode="dual";$("dualTab").classList.add("active");$("singleTab").classList.remove("active");$("genderWrap").hidden=true;$("voiceCards").hidden=true;$("formatHint").textContent="Dual format: each non-empty line must begin with MALE: or FEMALE:. NOVA automatically uses Charon and Kore."};
+function makePayload(){
+ const text=$("script").value.trim();if(!text)throw Error("Enter your Hindi script first.");
+ if(mode==="single")return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value}};
+ const lines=text.split(/\r?\n/).map(line=>{const m=line.match(/^\s*(MALE|FEMALE)\s*:\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);
+ if(!lines.length||lines.length!==text.split(/\r?\n/).filter(x=>x.trim()).length)throw Error("Every non-empty line must start with MALE: or FEMALE:.");
+ return {route:"/tts/dual",payload:{segments:lines,rate:$("rate").value}};
 }
-$("preview").onclick=makePreview;
-$("generate").onclick=async()=>{const text=$("script").value.trim();if(!text){status("Enter your Hindi script first.","error");return}if(!endpoint()){status("Connect your TTS server before generating MP3.","error");return}let route="/tts",payload;if(mode==="single"){const voice=$("voice").value;if(!voice){status("No Hindi voice selected. Connect the server again.","error");return}payload={text,voice,gender:$("gender").value,rate:$("rate").value}}else{const lines=text.split(/\r?\n/).map(line=>{const m=line.match(/^\s*(MALE|FEMALE)\s*:\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);if(!lines.length||lines.length!==text.split(/\r?\n/).filter(x=>x.trim()).length){status("Every non-empty line must start with MALE: or FEMALE:.","error");return}if(!$("maleVoice").value||!$("femaleVoice").value){status("Connect server and select both Hindi voices.","error");return}route="/tts/dual";payload={segments:lines,male_voice:$("maleVoice").value,female_voice:$("femaleVoice").value,rate:$("rate").value}}
-const b=$("generate");b.disabled=true;b.textContent="Generating…";try{const r=await fetch(endpoint()+route,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok){let msg=await r.text();throw Error(msg||("Server error "+r.status))}const blob=await r.blob();if(!blob.size)throw Error("The server returned an empty audio file.");const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=mode==="dual"?"nova-hindi-dual.mp3":"nova-hindi-"+$("gender").value+".mp3";document.body.append(a);a.click();a.remove();$("player").src=url;$("player").hidden=false;status("MP3 generated successfully. Download started.","ok")}catch(e){status("Generation failed: "+e.message,"error")}finally{b.disabled=false;b.textContent="Generate MP3 ↓"}};
-if("speechSynthesis"in window)speechSynthesis.onvoiceschanged=()=>{};
-</script></body></html>
+async function runTTS(preview){
+ let data;try{data=makePayload()}catch(e){status(e.message,"error");return}
+ if(!endpoint()){status("Connect the TTS server first.","error");return}
+ const b=preview?$("preview"):$("generate");b.disabled=true;b.textContent=preview?"Preparing preview…":"Generating WAV…";
+ try{
+  const r=await fetch(endpoint()+data.route,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data.payload)});
+  if(!r.ok){let msg=await r.text();try{msg=JSON.parse(msg).detail||msg}catch(e){}throw Error(msg||("Server error "+r.status))}
+  const blob=await r.blob();if(!blob.size)throw Error("The server returned an empty audio file.");
+  const url=URL.createObjectURL(blob);$("player").src=url;$("player").hidden=false;
+  if(preview){await $("player").play();status("Preview ready. Listen to the fixed Gemini voice.","ok")}
+  else{const a=document.createElement("a");a.href=url;a.download=mode==="dual"?"nova-hindi-dual.wav":"nova-hindi-"+$("gender").value+".wav";document.body.append(a);a.click();a.remove();status("WAV generated successfully. Download started.","ok")}
+ }catch(e){status("Generation failed: "+e.message,"error")}
+ finally{b.disabled=false;b.textContent=preview?"▶ Preview":"Generate WAV ↓"}
+}
+$("preview").onclick=()=>runTTS(true);$("generate").onclick=()=>runTTS(false);
+connectServer();
+</script>
+</body>
+</html>
