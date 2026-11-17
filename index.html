@@ -46,13 +46,27 @@ const $=id=>document.getElementById(id);let voices=[],mode="single";
 const rateValue=()=>({"-10%":.88,"+0%":1,"+10%":1.1,"+20%":1.2})[$("rate").value];
 function status(t,type=""){ $("status").textContent=t;$("status").className="status "+type}
 $("script").addEventListener("input",()=> $("count").textContent=$("script").value.length);
+const SERVER_KEY="nova_voice_server_url";
 function endpoint(){return $("endpoint").value.trim().replace(/\/$/,"")}
+function saveEndpoint(){const value=endpoint();if(value)localStorage.setItem(SERVER_KEY,value);else localStorage.removeItem(SERVER_KEY)}
+async function connectServer(){
+ if(!endpoint()){status("Enter your TTS server address first.","error");return}
+ saveEndpoint();
+ const b=$("connect");b.disabled=true;b.textContent="Connecting…";
+ try{const r=await fetch(endpoint()+"/voices",{cache:"no-store"});if(!r.ok)throw Error("Server returned "+r.status);voices=await r.json();fillServerVoices();status("Connected. Hindi voices loaded. Server address saved on this device.","ok")}
+ catch(e){status("Connection failed: "+e.message,"error")}
+ finally{b.disabled=false;b.textContent="Connect"}
+}
+$("endpoint").addEventListener("change",saveEndpoint);
+$("endpoint").addEventListener("blur",saveEndpoint);
 function setMode(next){mode=next;$("singleTab").classList.toggle("active",mode==="single");$("dualTab").classList.toggle("active",mode==="dual");$("genderWrap").hidden=mode==="dual";$("voiceWrap").hidden=mode==="dual";$("maleWrap").hidden=mode!=="dual";$("femaleWrap").hidden=mode!=="dual";$("formatHint").textContent=mode==="dual"?"Dual format: put each speaker on a separate line, beginning with MALE: or FEMALE:.":"Single voice: paste a Hindi script and choose Male or Female speaker.";if(voices.length)fillServerVoices()}
 $("singleTab").onclick=()=>setMode("single");$("dualTab").onclick=()=>setMode("dual");
 function fillSelect(id,gender){const found=voices.filter(v=>(v.Locale||"").toLowerCase().startsWith("hi-in")&&(v.Gender||"").toLowerCase()===gender);const el=$(id);el.innerHTML="";found.forEach(v=>{const o=document.createElement("option");o.value=v.ShortName;o.textContent=(v.FriendlyName||v.ShortName)+(v.ShortName.includes("Neural")?" · Neural":"");el.append(o)});if(!found.length){const o=document.createElement("option");o.value="";o.textContent="No Hindi "+gender+" voice returned by server";el.append(o);return}const preferred=gender==="male"?"hi-IN-MadhurNeural":"hi-IN-SwaraNeural";if(found.some(v=>v.ShortName===preferred))el.value=preferred}
 function fillServerVoices(){fillSelect("voice",$("gender").value);fillSelect("maleVoice","male");fillSelect("femaleVoice","female")}
 $("gender").onchange=()=>{if(voices.length)fillSelect("voice",$("gender").value)};
-$("connect").onclick=async()=>{if(!endpoint()){status("Enter your TTS server address first.","error");return}const b=$("connect");b.disabled=true;b.textContent="Connecting…";try{const r=await fetch(endpoint()+"/voices",{cache:"no-store"});if(!r.ok)throw Error("Server returned "+r.status);voices=await r.json();fillServerVoices();status("Connected. Hindi voices loaded. Select a speaker and generate your MP3.","ok")}catch(e){status("Connection failed: "+e.message,"error")}finally{b.disabled=false;b.textContent="Connect"}};
+$("connect").onclick=connectServer;
+const savedServer=localStorage.getItem(SERVER_KEY);
+if(savedServer){$("endpoint").value=savedServer;connectServer()}
 async function makePreview(){
  const text=$("script").value.trim();
  if(!text){status("Enter your Hindi script first.","error");return}
