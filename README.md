@@ -1,19 +1,20 @@
 # NOVA VOICE STUDIO
 
-A lightweight personal narration studio for Bangla, Hindi, English and Nepali.
+A lightweight Hindi narration studio powered by Gemini 3.8 Flash TTS.
 
-## Current features
-- Responsive web interface
-- Device voice preview using browser speech synthesis
-- Male/female voice filtering when connected to the API
-- MP3 generation through the Edge TTS API
-- No login, script history, database or server-side audio storage
+## Fixed voices
+- Male narrator: Charon — warm, deep, engaging documentary delivery.
+- Female co-host: Kore — warm, bright, curious and expressive delivery.
+- Permanent style prompts are stored in the backend.
+- Single-speaker and two-speaker Hindi narration.
+- Optional emotion tags such as [curiosity], [suspense], [excited] and [long pause].
+- WAV audio generation; scripts and audio are not stored by this app.
 
 ## Website
-GitHub Pages deploys the static frontend. The first deployment runs through the GitHub Actions workflow in `.github/workflows/pages.yml`.
+GitHub Pages hosts the static frontend.
 
-## TTS backend
-The Python API is in `server.py`. It uses FastAPI and Edge TTS.
+## Backend
+The FastAPI backend is in `server.py` and calls the Gemini API from the server. Set the `GEMINI_API_KEY` secret in the Render service Environment Variables. Never put the key in this repository or the browser frontend.
 
 Install and run:
 ```bash
@@ -21,6 +22,4 @@ pip install -r requirements.txt
 uvicorn server:app --host 0.0.0.0 --port 8000
 ```
 
-Enter the public HTTPS address of the running API in the website's TTS Server Address field. GitHub Pages only hosts the frontend; it does not run this Python server. Do not publish API keys or private credentials in this repository.
-
-Generated audio is returned to the browser and is not saved by this application. Edge TTS requires an internet connection and availability of the upstream voice service.
+The server uses the `gemini-3.8-flash-tts` model. API availability, free-tier limits and pricing are controlled by Google and may change.
