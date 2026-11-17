@@ -53,8 +53,32 @@ function fillSelect(id,gender){const found=voices.filter(v=>(v.Locale||"").toLow
 function fillServerVoices(){fillSelect("voice",$("gender").value);fillSelect("maleVoice","male");fillSelect("femaleVoice","female")}
 $("gender").onchange=()=>{if(voices.length)fillSelect("voice",$("gender").value)};
 $("connect").onclick=async()=>{if(!endpoint()){status("Enter your TTS server address first.","error");return}const b=$("connect");b.disabled=true;b.textContent="Connecting…";try{const r=await fetch(endpoint()+"/voices",{cache:"no-store"});if(!r.ok)throw Error("Server returned "+r.status);voices=await r.json();fillServerVoices();status("Connected. Hindi voices loaded. Select a speaker and generate your MP3.","ok")}catch(e){status("Connection failed: "+e.message,"error")}finally{b.disabled=false;b.textContent="Connect"}};
-function browserVoice(gender){const list=speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith("hi"));const match=list.find(v=>gender==="male"?/male|madhur|hemant|ravi/i.test(v.name):/female|swara|kalpana|lekha/i.test(v.name));return match||list[0]||null}
-$("preview").onclick=()=>{const text=$("script").value.trim();if(!text){status("Enter your Hindi script first.","error");return}speechSynthesis.cancel();const speak=(part,gender)=>new Promise(resolve=>{const u=new SpeechSynthesisUtterance(part);u.lang="hi-IN";u.rate=rateValue();u.voice=browserVoice(gender);u.onend=resolve;u.onerror=resolve;speechSynthesis.speak(u)});if(mode==="single"){speak(text,$("gender").value);status("Playing device Hindi preview. MP3 uses the selected server voice.","ok")}else{const lines=text.split(/\r?\n/).map(line=>{const m=line.match(/^\s*(MALE|FEMALE)\s*:\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);if(!lines.length||lines.length!==text.split(/\r?\n/).filter(x=>x.trim()).length){status("Every non-empty line must start with MALE: or FEMALE:.","error");return}(async()=>{for(const line of lines)await speak(line.text,line.speaker)})();status("Playing dual-speaker device preview.","ok")}};
+async function makePreview(){
+ const text=$("script").value.trim();
+ if(!text){status("Enter your Hindi script first.","error");return}
+ if(!endpoint()){status("Connect the TTS server first. Preview will then use the exact selected Neural voices.","error");return}
+ let route="/tts",payload;
+ if(mode==="single"){
+  const voice=$("voice").value;
+  if(!voice){status("No selected Hindi voice. Reconnect the server.","error");return}
+  payload={text,voice,rate:$("rate").value};
+ }else{
+  const lines=text.split(/\\r?\\n/).map(line=>{const m=line.match(/^\\s*(MALE|FEMALE)\\s*:\\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);
+  if(!lines.length||lines.length!==text.split(/\\r?\\n/).filter(x=>x.trim()).length){status("Every non-empty line must start with MALE: or FEMALE:.","error");return}
+  if(!$("maleVoice").value||!$("femaleVoice").value){status("Reconnect the server and select both speakers.","error");return}
+  route="/tts/dual";payload={segments:lines,male_voice:$("maleVoice").value,female_voice:$("femaleVoice").value,rate:$("rate").value};
+ }
+ const b=$("preview");b.disabled=true;b.textContent="Preparing preview…";
+ try{
+  const r=await fetch(endpoint()+route,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  if(!r.ok)throw Error(await r.text());
+  const blob=await r.blob();if(!blob.size)throw Error("Empty audio returned.");
+  const url=URL.createObjectURL(blob);$("player").src=url;$("player").hidden=false;
+  await $("player").play();status("Preview is using the exact server-selected Hindi voice(s).","ok");
+ }catch(e){status("Preview failed: "+e.message,"error")}
+ finally{b.disabled=false;b.textContent="▶ Preview"}
+}
+$("preview").onclick=makePreview;
 $("generate").onclick=async()=>{const text=$("script").value.trim();if(!text){status("Enter your Hindi script first.","error");return}if(!endpoint()){status("Connect your TTS server before generating MP3.","error");return}let route="/tts",payload;if(mode==="single"){const voice=$("voice").value;if(!voice){status("No Hindi voice selected. Connect the server again.","error");return}payload={text,voice,rate:$("rate").value}}else{const lines=text.split(/\r?\n/).map(line=>{const m=line.match(/^\s*(MALE|FEMALE)\s*:\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);if(!lines.length||lines.length!==text.split(/\r?\n/).filter(x=>x.trim()).length){status("Every non-empty line must start with MALE: or FEMALE:.","error");return}if(!$("maleVoice").value||!$("femaleVoice").value){status("Connect server and select both Hindi voices.","error");return}route="/tts/dual";payload={segments:lines,male_voice:$("maleVoice").value,female_voice:$("femaleVoice").value,rate:$("rate").value}}
 const b=$("generate");b.disabled=true;b.textContent="Generating…";try{const r=await fetch(endpoint()+route,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok){let msg=await r.text();throw Error(msg||("Server error "+r.status))}const blob=await r.blob();if(!blob.size)throw Error("The server returned an empty audio file.");const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=mode==="dual"?"nova-hindi-dual.mp3":"nova-hindi-"+$("gender").value+".mp3";document.body.append(a);a.click();a.remove();$("player").src=url;$("player").hidden=false;status("MP3 generated successfully. Download started.","ok")}catch(e){status("Generation failed: "+e.message,"error")}finally{b.disabled=false;b.textContent="Generate MP3 ↓"}};
 if("speechSynthesis"in window)speechSynthesis.onvoiceschanged=()=>{};
