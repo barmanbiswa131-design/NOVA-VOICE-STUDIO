@@ -61,7 +61,7 @@ async function makePreview(){
  if(mode==="single"){
   const voice=$("voice").value;
   if(!voice){status("No selected Hindi voice. Reconnect the server.","error");return}
-  payload={text,voice,rate:$("rate").value};
+  payload={text,voice,gender:$("gender").value,rate:$("rate").value};
  }else{
   const lines=text.split(/\\r?\\n/).map(line=>{const m=line.match(/^\\s*(MALE|FEMALE)\\s*:\\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);
   if(!lines.length||lines.length!==text.split(/\\r?\\n/).filter(x=>x.trim()).length){status("Every non-empty line must start with MALE: or FEMALE:.","error");return}
