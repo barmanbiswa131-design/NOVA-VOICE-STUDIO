@@ -89,13 +89,17 @@ def speed_instruction(rate: str) -> str:
 
 def gemini_audio(text: str, voice_config: dict, style: str) -> bytes:
     key = get_api_key()
+    prompt = (
+        "TTS the following transcript as natural spoken audio. Follow the director's "
+        "notes for voice, emotion, accent and pacing. Do not read the director's notes "
+        "or the words 'Transcript begins' aloud. Read only the transcript after that label.\n\n"
+        "DIRECTOR'S NOTES:\n" + style + "\n\n"
+        "TRANSCRIPT BEGINS:\n" + text
+    )
     payload = {
         "contents": [{
             "role": "user",
-            "parts": [{
-                "text": text,
-                "speechMetadata": {"style": style},
-            }],
+            "parts": [{"text": prompt}],
         }],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
