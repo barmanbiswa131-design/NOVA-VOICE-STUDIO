@@ -177,10 +177,16 @@ def home():
 
 @app.get("/voices")
 def voices():
+    # Keep both the structured fixed-voice fields and an array for older frontends
+    # that expect data.voices.filter(...).
     return {
         "engine": MODEL,
-        "male": {"id": MALE_VOICE, "name": "Charon", "style": "Deep documentary narrator"},
-        "female": {"id": FEMALE_VOICE, "name": "Kore", "style": "Expressive co-host"},
+        "male": {"id": MALE_VOICE, "name": "Charon", "gender": "male", "style": "Deep documentary narrator"},
+        "female": {"id": FEMALE_VOICE, "name": "Kore", "gender": "female", "style": "Expressive co-host"},
+        "voices": [
+            {"id": MALE_VOICE, "name": "Charon", "gender": "male", "style": "Deep documentary narrator"},
+            {"id": FEMALE_VOICE, "name": "Kore", "gender": "female", "style": "Expressive co-host"},
+        ],
     }
 
 
