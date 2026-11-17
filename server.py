@@ -219,31 +219,75 @@ def make_dual_tts(data: DualTTSRequest):
     pace = speed_instruction(data.rate)
     if any(seg.speaker not in {"male", "female"} for seg in data.segments):
         raise HTTPException(status_code=400, detail="Each speaker must be male or female.")
-    dialogue = []
+    # Gemini multi-speaker TTS requires one separate content part per turn,
+    # with speechMetadata.speaker matching a configured speaker alias.
+    parts = []
     for seg in data.segments:
-        alias = "MALE" if seg.speaker == "male" else "FEMALE"
-        dialogue.append(f"{alias}: {seg.text.strip()}")
-    audio = gemini_audio(
-        "\n".join(dialogue),
-        {
-            "languageCode": "hi-IN",
-            "multiSpeakerVoiceConfig": {
-                "speakerVoiceConfigs": [
-                    {
-                        "speaker": "MALE",
-                        "voiceConfig": {
-                            "prebuiltVoiceConfig": {"voiceName": MALE_VOICE}
-                        },
-                    },
-                    {
-                        "speaker": "FEMALE",
-                        "voiceConfig": {
-                            "prebuiltVoiceConfig": {"voiceName": FEMALE_VOICE}
-                        },
-                    },
-                ]
+        if seg.speaker == "male":
+            alias = "MALE"
+            turn_style = MALE_STYLE
+        else:
+            alias = "FEMALE"
+            turn_style = FEMALE_STYLE
+        parts.append({
+            "text": seg.text.strip(),
+            "speechMetadata": {
+                "speaker": alias,
+                "style": turn_style + " " + pace,
+            },
+        })
+
+    payload = {
+        "contents": [{
+            "role": "user",
+            "parts": parts,
+        }],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "languageCode": "hi-IN",
+                "multiSpeakerVoiceConfig": {
+                    "speakerVoiceConfigs": [
+                        {"speaker": "MALE", "voiceConfig": {"voice": MALE_VOICE}},
+                        {"speaker": "FEMALE", "voiceConfig": {"voice": FEMALE_VOICE}},
+                    ],
+                },
             },
         },
-        DUAL_STYLE + " " + pace,
-    )
-    return audio_response(audio, "nova-hindi-dual.wav")
+    }
+
+    key = get_api_key()
+    try:
+        response = requests.post(
+            API_URL,
+            headers={
+                "x-goog-api-key": key,
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=180,
+        )
+        if not response.ok:
+            try:
+                detail = response.json().get("error", {}).get("message", response.text)
+            except Exception:
+                detail = response.text
+            raise HTTPException(
+                status_code=502,
+                detail=f"Gemini TTS error ({response.status_code}): {detail[:700]}"
+            )
+        body = response.json()
+        response_parts = body.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        for part in response_parts:
+            inline = part.get("inlineData") or part.get("inline_data")
+            if inline and inline.get("data"):
+                audio = base64.b64decode(inline["data"])
+                if audio:
+                    return audio_response(audio, "nova-hindi-dual.wav")
+        raise HTTPException(status_code=502, detail="Gemini returned no audio data.")
+    except HTTPException:
+        raise
+    except requests.Timeout:
+        raise HTTPException(status_code=504, detail="Gemini TTS timed out. Please try again.")
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"Could not reach Gemini TTS: {exc}")
