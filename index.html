@@ -68,13 +68,31 @@ $("endpoint").addEventListener("change",saveEndpoint);$("endpoint").addEventList
 const savedServer=localStorage.getItem(SERVER_KEY)||"https://nova-hindi-tts-wbc1.onrender.com";$("endpoint").value=savedServer;
 $("connect").onclick=connectServer;
 $("singleTab").onclick=()=>{mode="single";$("singleTab").classList.add("active");$("dualTab").classList.remove("active");$("genderWrap").hidden=false;$("voiceCards").hidden=false;$("formatHint").textContent="Single voice: choose Charon or Kore. NOVA keeps the selected voice identity and applies its saved style prompt."};
-$("dualTab").onclick=()=>{mode="dual";$("dualTab").classList.add("active");$("singleTab").classList.remove("active");$("genderWrap").hidden=true;$("voiceCards").hidden=true;$("formatHint").textContent="Dual format: each non-empty line must begin with MALE: or FEMALE:. NOVA automatically uses Charon and Kore."};
+$("dualTab").onclick=()=>{mode="dual";$("dualTab").classList.add("active");$("singleTab").classList.remove("active");$("genderWrap").hidden=true;$("voiceCards").hidden=true;$("formatHint").textContent="Smart script mode: paste the full documentary. NOVA skips titles, section headings and separators, then reads MALE/FEMALE dialogue. BOTH lines are spoken by both voices one after another."};
+function isNonSpokenHeading(line,index){
+ const s=line.trim();
+ if(!s||/^[\\s\\-_=*#~•·]+$/.test(s))return true;
+ if(index===0&&!/^\\s*(MALE|FEMALE|BOTH)\\s*:/i.test(s))return true;
+ if(/^(SCIENCE\\s+POP|INTRO|PART\\s*\\d+|ENDING|OUTRO|CHAPTER|SECTION|CONCLUSION)\\b/i.test(s))return true;
+ if(/^[A-Z0-9][A-Z0-9 \\-_–—:()]*$/.test(s)&&/[A-Z]/.test(s))return true;
+ return false;
+}
 function makePayload(){
  const text=$("script").value.trim();if(!text)throw Error("Enter your Hindi script first.");
  if(mode==="single")return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value}};
- const lines=text.split(/\r?\n/).map(line=>{const m=line.match(/^\s*(MALE|FEMALE)\s*:\s*(.*)$/i);return m?{speaker:m[1].toLowerCase(),text:m[2].trim()}:null}).filter(x=>x&&x.text);
- if(!lines.length||lines.length!==text.split(/\r?\n/).filter(x=>x.trim()).length)throw Error("Every non-empty line must start with MALE: or FEMALE:.");
- return {route:"/tts/dual",payload:{segments:lines,rate:$("rate").value}};
+ const segments=[],unknown=[];
+ text.split(/\\r?\\n/).forEach((line,index)=>{
+  const s=line.trim();if(!s||isNonSpokenHeading(s,index))return;
+  const m=s.match(/^(MALE|FEMALE|BOTH)\\s*:\\s*(.*)$/i);
+  if(!m){unknown.push(index+1);return}
+  const spoken=m[2].trim();if(!spoken)return;
+  const speaker=m[1].toUpperCase();
+  if(speaker==="BOTH"){segments.push({speaker:"male",text:spoken},{speaker:"female",text:spoken})}
+  else segments.push({speaker:speaker.toLowerCase(),text:spoken});
+ });
+ if(unknown.length)throw Error("Line "+unknown[0]+" is not labelled MALE:, FEMALE: or BOTH:. Please add a speaker label, or make it a clear heading.");
+ if(!segments.length)throw Error("No dialogue found. Add MALE:, FEMALE: or BOTH: before spoken lines.");
+ return {route:"/tts/dual",payload:{segments,rate:$("rate").value}};
 }
 async function runTTS(preview){
  let data;try{data=makePayload()}catch(e){status(e.message,"error");return}
