@@ -50,7 +50,7 @@ DUAL_STYLE = (
 
 
 class TTSRequest(BaseModel):
-    text: str = Field(min_length=1, max_length=5000)
+    text: str = Field(min_length=1)
     gender: str = "male"
     rate: str = "+0%"
 
@@ -61,7 +61,7 @@ class Segment(BaseModel):
 
 
 class DualTTSRequest(BaseModel):
-    segments: list[Segment] = Field(min_length=1, max_length=60)
+    segments: list[Segment] = Field(min_length=1)
     rate: str = "+0%"
 
 
