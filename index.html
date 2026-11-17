@@ -38,7 +38,7 @@ textarea,select,input{width:100%;border:1px solid #34445e;background:#0a1220;col
 <div class="actions"><button class="btn secondary" id="preview">▶ Preview</button><button class="btn primary" id="generate">Generate MP3 ↓</button></div>
 <div class="status" id="status">Connect your TTS server to load Hindi Neural voices and generate MP3 audio.</div><audio id="player" controls hidden></audio>
 </section>
-<section class="panel"><div class="section-title">TTS SERVER</div><div class="api"><input id="endpoint" type="url" placeholder="https://your-tts-server.example"><button class="btn secondary" id="connect">Connect</button></div><div class="hint">Required for MP3 generation. Your script and audio are not stored by this website.</div></section>
+<section class="panel"><div class="section-title">TTS SERVER</div><div class="api"><input id="endpoint" type="url" value="https://nova-hindi-tts-wbc1.onrender.com" placeholder="https://nova-hindi-tts-wbc1.onrender.com"><button class="btn secondary" id="connect">Connect</button></div><div class="hint">Required for MP3 generation. Your script and audio are not stored by this website.</div></section>
 <div class="footer">NOVA VOICE STUDIO · HINDI ONLY · NO ACCOUNT · NO HISTORY</div>
 </main>
 <script>
@@ -65,8 +65,9 @@ function fillSelect(id,gender){const found=voices.filter(v=>(v.Locale||"").toLow
 function fillServerVoices(){fillSelect("voice",$("gender").value);fillSelect("maleVoice","male");fillSelect("femaleVoice","female")}
 $("gender").onchange=()=>{if(voices.length)fillSelect("voice",$("gender").value)};
 $("connect").onclick=connectServer;
-const savedServer=localStorage.getItem(SERVER_KEY);
-if(savedServer){$("endpoint").value=savedServer;connectServer()}
+const savedServer=localStorage.getItem(SERVER_KEY)||"https://nova-hindi-tts-wbc1.onrender.com";
+$("endpoint").value=savedServer;
+connectServer();
 async function makePreview(){
  const text=$("script").value.trim();
  if(!text){status("Enter your Hindi script first.","error");return}
