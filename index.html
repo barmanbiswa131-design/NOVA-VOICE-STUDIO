@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d18"><title>NOVA VOICE STUDIO</title>
+<style>
+:root{color-scheme:dark;--bg:#090d18;--panel:#111a2b;--line:#26344c;--muted:#9aa9c0;--cyan:#69e2df;--purple:#a58bff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0%,#20234b 0,transparent 38%),var(--bg);color:#f4f7ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+main{max-width:850px;margin:auto;padding:30px 18px 60px}.brand{display:flex;align-items:center;gap:12px;margin:5px 0 28px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:grid;place-items:center;color:#101629;font-weight:900;font-size:21px}.brand strong{letter-spacing:2px;font-size:16px}.brand small{display:block;color:var(--muted);letter-spacing:1px;margin-top:3px}
+h1{font-size:clamp(30px,7vw,48px);line-height:1.05;margin:0 0 10px}h1 span{background:linear-gradient(90deg,var(--cyan),var(--purple));background-clip:text;color:transparent}.intro{color:var(--muted);margin:0 0 25px}
+.panel{background:linear-gradient(145deg,#141f33,#0f1727);border:1px solid var(--line);border-radius:20px;padding:20px;margin:14px 0;box-shadow:0 16px 40px #0003}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:560px){.grid{grid-template-columns:1fr}.panel{padding:16px}}
+label{display:block;font-size:13px;color:#c5d0e2;margin:0 0 8px}textarea,select,input{width:100%;border:1px solid #34445e;background:#0b1322;color:#f4f7ff;border-radius:12px;padding:13px;font:inherit;outline:none}textarea{min-height:180px;resize:vertical;line-height:1.6}select:focus,textarea:focus,input:focus{border-color:var(--cyan)}.hint{color:var(--muted);font-size:12px;margin-top:7px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}button{border:0;border-radius:12px;padding:13px 18px;font-weight:700;font-size:14px;cursor:pointer}.primary{background:linear-gradient(100deg,var(--cyan),#9eb6ff);color:#101629;flex:1}.secondary{background:#202d44;color:#f4f7ff;border:1px solid #3a4a64}.status{color:var(--muted);font-size:13px;min-height:20px;margin-top:13px}.status.error{color:#ff9a9a}.status.ok{color:#83e8c2}.api{display:flex;gap:10px;align-items:end}.api>div{flex:1}.api button{white-space:nowrap}.footer{text-align:center;color:#71819b;font-size:12px;margin-top:24px}audio{width:100%;margin-top:14px}
+</style></head>
+<body><main>
+<div class="brand"><div class="logo">N</div><div><strong>NOVA VOICE STUDIO</strong><small>PERSONAL AI VOICE WORKSPACE</small></div></div>
+<h1>Give your words<br><span>a voice.</span></h1><p class="intro">Create narration in Bangla, Hindi, English and Nepali.</p>
+<section class="panel"><label for="script">YOUR SCRIPT</label><textarea id="script" maxlength="5000" placeholder="Write or paste your narration here..."></textarea><div class="hint"><span id="count">0</span> / 5000 characters</div></section>
+<section class="panel"><div class="grid">
+<div><label for="language">LANGUAGE</label><select id="language"><option value="bn">Bangla</option><option value="hi">Hindi</option><option value="en">English</option><option value="ne">Nepali</option></select></div>
+<div><label for="gender">VOICE STYLE</label><select id="gender"><option value="female">Female voice</option><option value="male">Male voice</option></select></div>
+<div><label for="voice">VOICE</label><select id="voice"><option value="">Choose voice after connecting</option></select></div>
+<div><label for="rate">SPEAKING SPEED</label><select id="rate"><option value="-10%">Slow</option><option value="+0%" selected>Normal</option><option value="+10%">Fast</option><option value="+20%">Very fast</option></select></div>
+</div>
+<div class="actions"><button class="secondary" id="preview">▶ Preview voice</button><button class="primary" id="generate">Generate & Download MP3</button></div>
+<div class="status" id="status">Preview uses voices available on your device. MP3 generation needs a connected TTS server.</div><audio id="player" controls hidden></audio>
+</section>
+<section class="panel"><label for="endpoint">TTS SERVER ADDRESS</label><div class="api"><div><input id="endpoint" type="url" placeholder="https://your-tts-server.example"></div><button class="secondary" id="connect">Connect</button></div><div class="hint">Required for downloadable MP3. This website does not save your script or audio history.</div></section>
+<div class="footer">NOVA VOICE STUDIO · No account · No history · Temporary generation</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);let voices=[];
+const languageNames={bn:"Bangla",hi:"Hindi",en:"English",ne:"Nepali"};
+function sayStatus(t,type=""){ $("status").textContent=t;$("status").className="status "+type;}
+$("script").addEventListener("input",()=> $("count").textContent=$("script").value.length);
+function browserVoices(){return speechSynthesis.getVoices().filter(v=>v.lang.toLowerCase().startsWith($("language").value));}
+function fillBrowserVoice(){const list=browserVoices();$("voice").innerHTML="";list.forEach(v=>{let o=document.createElement("option");o.value=v.name;o.textContent=v.name+" · "+v.lang;$("voice").append(o)});if(!list.length){let o=document.createElement("option");o.value="";o.textContent="No matching device voice";$("voice").append(o)}}
+speechSynthesis.onvoiceschanged=()=>{if(!voices.length)fillBrowserVoice()};fillBrowserVoice();
+$("language").onchange=()=>{voices.length?fillServerVoices():fillBrowserVoice()};
+async function fillServerVoices(){const lang=$("language").value,gender=$("gender").value;const matches=voices.filter(v=>v.Locale.toLowerCase().startsWith(lang+"-")&&v.Gender.toLowerCase()===gender);$("voice").innerHTML="";matches.forEach(v=>{let o=document.createElement("option");o.value=v.ShortName;o.textContent=v.FriendlyName||v.ShortName;$("voice").append(o)});if(!matches.length){let o=document.createElement("option");o.textContent="No matching server voice";o.value="";$("voice").append(o)}}
+$("gender").onchange=()=>voices.length?fillServerVoices():fillBrowserVoice();
+function endpoint(){return $("endpoint").value.trim().replace(/\/$/,"")}
+$("connect").onclick=async()=>{if(!endpoint()){sayStatus("Enter your TTS server address first.","error");return}try{const r=await fetch(endpoint()+"/voices");if(!r.ok)throw Error("Server returned "+r.status);voices=await r.json();fillServerVoices();sayStatus("Connected. Available voices loaded.","ok")}catch(e){sayStatus("Could not connect: "+e.message,"error")}};
+$("preview").onclick=()=>{const text=$("script").value.trim();if(!text){sayStatus("Please enter your script first.","error");return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=({bn:"bn-IN",hi:"hi-IN",en:"en-IN",ne:"ne-NP"})[$("language").value];const match=speechSynthesis.getVoices().find(v=>v.name===$("voice").value);if(match)u.voice=match;u.rate=$("rate").value==="-10%"?.88:$("rate").value==="+10%"?1.1:$("rate").value==="+20%"?1.2:1;speechSynthesis.speak(u);sayStatus("Playing device voice preview. Preview availability depends on your phone.","ok")};
+$("generate").onclick=async()=>{const text=$("script").value.trim();if(!text){sayStatus("Please enter your script first.","error");return}if(!endpoint()){sayStatus("Connect a TTS server to generate an MP3.","error");return}if(!$("voice").value){sayStatus("Choose an available voice.","error");return}const b=$("generate");b.disabled=true;b.textContent="Generating...";try{const r=await fetch(endpoint()+"/tts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,voice:$("voice").value,rate:$("rate").value})});if(!r.ok)throw Error(await r.text());const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="nova-voice.mp3";a.click();$("player").src=url;$("player").hidden=false;sayStatus("MP3 generated. Download started.","ok")}catch(e){sayStatus("Generation failed: "+e.message,"error")}finally{b.disabled=false;b.textContent="Generate & Download MP3"}};
+</script></body></html>
