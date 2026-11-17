@@ -71,19 +71,19 @@ $("singleTab").onclick=()=>{mode="single";$("singleTab").classList.add("active")
 $("dualTab").onclick=()=>{mode="dual";$("dualTab").classList.add("active");$("singleTab").classList.remove("active");$("genderWrap").hidden=true;$("voiceCards").hidden=true;$("formatHint").textContent="Smart script mode: paste the full documentary. NOVA skips titles, section headings and separators, then reads MALE/FEMALE dialogue. BOTH lines are spoken by both voices one after another."};
 function isNonSpokenHeading(line,index){
  const s=line.trim();
- if(!s||/^[\\s\\-_=*#~•·]+$/.test(s))return true;
- if(index===0&&!/^\\s*(MALE|FEMALE|BOTH)\\s*:/i.test(s))return true;
- if(/^(SCIENCE\\s+POP|INTRO|PART\\s*\\d+|ENDING|OUTRO|CHAPTER|SECTION|CONCLUSION)\\b/i.test(s))return true;
- if(/^[A-Z0-9][A-Z0-9 \\-_–—:()]*$/.test(s)&&/[A-Z]/.test(s))return true;
+ if(!s||/^[\s\-_=*#~•·]+$/.test(s))return true;
+ if(index===0&&!/^\s*(MALE|FEMALE|BOTH)\s*:/i.test(s))return true;
+ if(/^(SCIENCE\s+POP|INTRO|PART\s*\d+|ENDING|OUTRO|CHAPTER|SECTION|CONCLUSION)\b/i.test(s))return true;
+ if(/^[A-Z0-9][A-Z0-9 \-_–—:()]*$/.test(s)&&/[A-Z]/.test(s))return true;
  return false;
 }
 function makePayload(){
  const text=$("script").value.trim();if(!text)throw Error("Enter your Hindi script first.");
  if(mode==="single")return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value}};
  const segments=[],unknown=[];
- text.split(/\\r?\\n/).forEach((line,index)=>{
+ text.split(/\r?\n/).forEach((line,index)=>{
   const s=line.trim();if(!s||isNonSpokenHeading(s,index))return;
-  const m=s.match(/^(MALE|FEMALE|BOTH)\\s*:\\s*(.*)$/i);
+  const m=s.match(/^(MALE|FEMALE|BOTH)\s*:\s*(.*)$/i);
   if(!m){unknown.push(index+1);return}
   const spoken=m[2].trim();if(!spoken)return;
   const speaker=m[1].toUpperCase();
