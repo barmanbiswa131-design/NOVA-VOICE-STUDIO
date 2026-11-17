@@ -48,8 +48,8 @@ async def make_tts(data: TTSRequest):
     try:
         catalog = await edge_tts.list_voices()
         selected = next((v for v in catalog if v.get("ShortName") == data.voice), None)
-        if not selected or selected.get("Gender", "").lower() != data.gender:
-            raise HTTPException(status_code=400, detail="Selected voice does not match the chosen speaker gender. Reconnect and select again.")
+        if not selected or not selected.get("Locale", "").lower().startswith("hi-in") or not selected.get("ShortName", "").endswith("Neural"):
+            raise HTTPException(status_code=400, detail="Selected voice is not a supported Hindi Neural voice. Reconnect and select again.")
         output = io.BytesIO()
         pitch = "-8Hz" if data.gender == "male" else "+0Hz"
         communicate = edge_tts.Communicate(data.text, data.voice, rate=data.rate, pitch=pitch)
@@ -60,6 +60,8 @@ async def make_tts(data: TTSRequest):
         if not audio:
             raise RuntimeError("No audio was returned")
         return Response(audio, media_type="audio/mpeg", headers={"Content-Disposition": 'attachment; filename="nova-voice.mp3"', "Cache-Control": "no-store"})
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
@@ -76,10 +78,10 @@ async def make_dual_tts(data: DualTTSRequest):
         catalog = await edge_tts.list_voices()
         by_name = {v.get("ShortName"): v for v in catalog}
         male_info, female_info = by_name.get(data.male_voice), by_name.get(data.female_voice)
-        if not male_info or male_info.get("Gender", "").lower() != "male":
-            raise HTTPException(status_code=400, detail="The selected MALE voice is not a verified male Hindi voice. Reconnect and choose a male voice.")
-        if not female_info or female_info.get("Gender", "").lower() != "female":
-            raise HTTPException(status_code=400, detail="The selected FEMALE voice is not a verified female Hindi voice. Reconnect and choose a female voice.")
+        if not male_info or not male_info.get("Locale", "").lower().startswith("hi-in") or not male_info.get("ShortName", "").endswith("Neural"):
+            raise HTTPException(status_code=400, detail="The selected MALE voice is not a supported Hindi Neural voice. Reconnect and choose again.")
+        if not female_info or not female_info.get("Locale", "").lower().startswith("hi-in") or not female_info.get("ShortName", "").endswith("Neural"):
+            raise HTTPException(status_code=400, detail="The selected FEMALE voice is not a supported Hindi Neural voice. Reconnect and choose again.")
         output = io.BytesIO()
         for seg in data.segments:
             voice = data.male_voice if seg.speaker == "male" else data.female_voice
