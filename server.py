@@ -53,6 +53,7 @@ class TTSRequest(BaseModel):
     text: str = Field(min_length=1)
     gender: str = "male"
     rate: str = "+0%"
+    style_preset: str = "documentary"
 
 
 class Segment(BaseModel):
@@ -63,6 +64,7 @@ class Segment(BaseModel):
 class DualTTSRequest(BaseModel):
     segments: list[Segment] = Field(min_length=1)
     rate: str = "+0%"
+    style_preset: str = "documentary"
 
 
 def get_api_key():
@@ -85,6 +87,31 @@ def speed_instruction(rate: str) -> str:
     if rate not in speeds:
         raise HTTPException(status_code=400, detail="Unsupported speaking speed.")
     return speeds[rate]
+
+
+HORROR_MALE_STYLE = (
+    "Use a premium Indian horror-movie-explained narrator delivery in natural Hinglish. "
+    "Keep the same deep, warm Charon voice identity. Sound dark, cinematic, mysterious "
+    "and controlled. Start with an intriguing low-key tone, build tension gradually, "
+    "use deliberate pauses before reveals, make frightening moments ominous rather than "
+    "shouting, and deliver emotional scenes with seriousness. Pronounce Hindi and Roman "
+    "Hindi clearly and naturally. Do not add sound effects or music. Read only the script."
+)
+
+HORROR_FEMALE_STYLE = (
+    "Use a natural Indian female co-narrator delivery in Hinglish with the same Kore voice "
+    "identity. Sound expressive, curious and alert. Use restrained surprise, nervousness "
+    "and suspense when the story calls for it. Keep reactions believable, not theatrical. "
+    "Pronounce words clearly and do not add sound effects or music."
+)
+
+
+def get_style(base_style: str, gender: str, preset: str) -> str:
+    if preset == "documentary":
+        return base_style
+    if preset == "horror":
+        return HORROR_MALE_STYLE if gender == "male" else HORROR_FEMALE_STYLE
+    raise HTTPException(status_code=400, detail="Unsupported narration style.")
 
 
 def gemini_audio(text: str, voice_config: dict, style: str) -> bytes:
@@ -197,10 +224,10 @@ def make_tts(data: TTSRequest):
     pace = speed_instruction(data.rate)
     if data.gender == "male":
         voice = MALE_VOICE
-        style = MALE_STYLE + " " + pace
+        style = get_style(MALE_STYLE, "male", data.style_preset) + " " + pace
     else:
         voice = FEMALE_VOICE
-        style = FEMALE_STYLE + " " + pace
+        style = get_style(FEMALE_STYLE, "female", data.style_preset) + " " + pace
     audio = gemini_audio(
         data.text,
         {
@@ -217,6 +244,8 @@ def make_tts(data: TTSRequest):
 @app.post("/tts/dual")
 def make_dual_tts(data: DualTTSRequest):
     pace = speed_instruction(data.rate)
+    if data.style_preset not in {"documentary", "horror"}:
+        raise HTTPException(status_code=400, detail="Unsupported narration style.")
     if any(seg.speaker not in {"male", "female"} for seg in data.segments):
         raise HTTPException(status_code=400, detail="Each speaker must be male or female.")
     # Gemini multi-speaker TTS requires one separate content part per turn,
@@ -225,10 +254,10 @@ def make_dual_tts(data: DualTTSRequest):
     for seg in data.segments:
         if seg.speaker == "male":
             alias = "MALE"
-            turn_style = MALE_STYLE
+            turn_style = get_style(MALE_STYLE, "male", data.style_preset)
         else:
             alias = "FEMALE"
-            turn_style = FEMALE_STYLE
+            turn_style = get_style(FEMALE_STYLE, "female", data.style_preset)
         parts.append({
             "text": seg.text.strip(),
             "speechMetadata": {
