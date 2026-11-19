@@ -28,8 +28,8 @@ textarea,select,input{width:100%;border:1px solid #34445e;background:#0a1220;col
 <p class="intro">Two permanent Hindi narrator voices with expressive delivery for science stories, Shorts and documentary narration.</p>
 <section class="panel">
 <div class="section-title">YOUR SCRIPT</div>
-<textarea id="script" placeholder="अपनी हिंदी स्क्रिप्ट यहाँ लिखें या पेस्ट करें..."></textarea>
-<div class="hint count"><span>Use Devanagari Hindi. Emotion tags like [curiosity], [suspense], [excited], [long pause] are optional.</span><span><b id="count">0</b> characters</span></div>
+<textarea id="script" placeholder="Paste your full movie-explained script here. Headings like INTRO, PART 1 and OUTRO will be skipped automatically..."></textarea>
+<div class="hint count"><span>Single voice reads the story as one narrator. Titles and section headings (INTRO, PART 1, OUTRO) are skipped automatically.</span><span><b id="count">0</b> characters</span></div>
 </section>
 <section class="panel">
 <div class="section-title">VOICE SETTINGS</div>
@@ -70,20 +70,30 @@ const savedServer=localStorage.getItem(SERVER_KEY)||"https://nova-hindi-tts-wbc1
 $("connect").onclick=connectServer;
 $("singleTab").onclick=()=>{mode="single";$("singleTab").classList.add("active");$("dualTab").classList.remove("active");$("genderWrap").hidden=false;$("voiceCards").hidden=false;$("formatHint").textContent="Single voice: choose Charon or Kore. NOVA keeps the selected voice identity and applies its saved style prompt."};
 $("dualTab").onclick=()=>{mode="dual";$("dualTab").classList.add("active");$("singleTab").classList.remove("active");$("genderWrap").hidden=true;$("voiceCards").hidden=true;$("formatHint").textContent="Smart script mode: paste the full documentary. NOVA skips titles, section headings and separators, then reads MALE/FEMALE dialogue. BOTH lines are spoken by both voices one after another."};
-function isNonSpokenHeading(line,index){
+function isNonSpokenHeading(line){
  const s=line.trim();
  if(!s||/^[\s\-_=*#~•·]+$/.test(s))return true;
- if(index===0&&!/^\s*(MALE|FEMALE|BOTH)\s*:/i.test(s))return true;
- if(/^(SCIENCE\s+POP|INTRO|PART\s*\d+|ENDING|OUTRO|CHAPTER|SECTION|CONCLUSION)\b/i.test(s))return true;
+ if(/^(TUMBBAD\s*\(\s*\d{4}\s*\)|SCIENCE\s+POP|INTRO|PART\s*\d+|ENDING|OUTRO|CHAPTER|SECTION|CONCLUSION|FINAL\s+EXPLANATION)\b/i.test(s))return true;
  if(/^[A-Z0-9][A-Z0-9 \-_–—:()]*$/.test(s)&&/[A-Z]/.test(s))return true;
  return false;
 }
+function cleanSingleNarration(source){
+ return source.split(/\r?\n/)
+  .filter(line=>!isNonSpokenHeading(line))
+  .map(line=>line.trim())
+  .filter(Boolean)
+  .join("\n");
+}
 function makePayload(){
- const text=$("script").value.trim();if(!text)throw Error("Enter your Hindi script first.");
- if(mode==="single")return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value,style_preset:$("stylePreset").value}};
+ const raw=$("script").value.trim();if(!raw)throw Error("Enter your script first.");
+ if(mode==="single"){
+  const text=cleanSingleNarration(raw);
+  if(!text)throw Error("No narration found after removing headings.");
+  return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value,style_preset:$("stylePreset").value}};
+ }
  const segments=[],unknown=[];
- text.split(/\r?\n/).forEach((line,index)=>{
-  const s=line.trim();if(!s||isNonSpokenHeading(s,index))return;
+ raw.split(/\r?\n/).forEach((line,index)=>{
+  const s=line.trim();if(!s||isNonSpokenHeading(s))return;
   const m=s.match(/^(MALE|FEMALE|BOTH)\s*:\s*(.*)$/i);
   if(!m){unknown.push(index+1);return}
   const spoken=m[2].trim();if(!spoken)return;
@@ -91,7 +101,7 @@ function makePayload(){
   if(speaker==="BOTH"){segments.push({speaker:"male",text:spoken},{speaker:"female",text:spoken})}
   else segments.push({speaker:speaker.toLowerCase(),text:spoken});
  });
- if(unknown.length)throw Error("Line "+unknown[0]+" is not labelled MALE:, FEMALE: or BOTH:. Please add a speaker label, or make it a clear heading.");
+ if(unknown.length)throw Error("Line "+unknown[0]+" is not labelled MALE:, FEMALE: or BOTH:. For a solo narration, select Single voice.");
  if(!segments.length)throw Error("No dialogue found. Add MALE:, FEMALE: or BOTH: before spoken lines.");
  return {route:"/tts/dual",payload:{segments,rate:$("rate").value,style_preset:$("stylePreset").value}};
 }
