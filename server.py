@@ -90,12 +90,21 @@ def speed_instruction(rate: str) -> str:
 
 
 HORROR_MALE_STYLE = (
-    "Use a premium Indian horror-movie-explained narrator delivery in natural Hinglish. "
-    "Keep the same deep, warm Charon voice identity. Sound dark, cinematic, mysterious "
-    "and controlled. Start with an intriguing low-key tone, build tension gradually, "
-    "use deliberate pauses before reveals, make frightening moments ominous rather than "
-    "shouting, and deliver emotional scenes with seriousness. Pronounce Hindi and Roman "
-    "Hindi clearly and naturally. Do not add sound effects or music. Read only the script."
+    "You are narrating a premium Indian YouTube horror movie explanation, not reading a "
+    "plain document. Keep the exact same deep, warm Charon voice identity. Speak fluent, "
+    "natural Indian Hinglish with clear Indian pronunciation and conversational flow. "
+    "Make the listener feel pulled into the film: begin with an intimate mysterious hook, "
+    "build curiosity, then steadily increase tension as danger approaches. Use a rich, "
+    "slightly hushed and ominous tone for Hastar and the hidden treasure; use controlled "
+    "intensity for frightening reveals, never scream or overact. Explain plot details "
+    "clearly and confidently like an experienced movie-explainer host, varying pitch, "
+    "rhythm and emphasis so the narration never sounds flat. Give short natural pauses "
+    "after suspenseful questions, before important reveals, and at paragraph breaks. "
+    "Slow down slightly for emotional moments and the final moral explanation; finish "
+    "with a warm, engaging YouTube outro. Keep words crisp and audible, avoid monotone, "
+    "avoid excessive slowness, and do not invent or speak headings, labels, stage "
+    "directions, or production notes. Read only the actual story narration. No music "
+    "or sound effects."
 )
 
 HORROR_FEMALE_STYLE = (
