@@ -185,6 +185,71 @@ def gemini_audio(text: str, voice_config: dict, style: str) -> bytes:
         raise HTTPException(status_code=502, detail=f"Audio generation failed: {exc}")
 
 
+def split_tts_text(text: str, max_chars: int = 500) -> list[str]:
+    """Split long narration into small independent TTS requests to limit drift."""
+    paragraphs = [p.strip() for p in text.splitlines() if p.strip()]
+    chunks = []
+    current = ""
+    for paragraph in paragraphs:
+        words = paragraph.split()
+        piece = ""
+        for word in words:
+            candidate = (piece + " " + word).strip()
+            if len(candidate) > max_chars and piece:
+                if current:
+                    chunks.append(current)
+                    current = ""
+                chunks.append(piece)
+                piece = word
+            else:
+                piece = candidate
+        if piece:
+            candidate = (current + " " + piece).strip()
+            if len(candidate) <= max_chars:
+                current = candidate
+            else:
+                if current:
+                    chunks.append(current)
+                current = piece
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+def ensure_wav(audio: bytes) -> bytes:
+    if audio.startswith(b"RIFF"):
+        return audio
+    wav_buffer = io.BytesIO()
+    with wave.open(wav_buffer, "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(24000)
+        wav_file.writeframes(audio)
+    return wav_buffer.getvalue()
+
+
+def join_wav_audio(clips: list[bytes]) -> bytes:
+    """Join generated WAV clips without adding any new spoken content."""
+    output = io.BytesIO()
+    params = None
+    frames = []
+    for clip in clips:
+        with wave.open(io.BytesIO(ensure_wav(clip)), "rb") as wav_file:
+            clip_params = wav_file.getparams()
+            if params is None:
+                params = clip_params
+            elif (clip_params.nchannels, clip_params.sampwidth, clip_params.framerate, clip_params.comptype) != (params.nchannels, params.sampwidth, params.framerate, params.comptype):
+                raise HTTPException(status_code=502, detail="TTS returned incompatible audio chunks. Please retry.")
+            frames.append(wav_file.readframes(wav_file.getnframes()))
+    if not params:
+        raise HTTPException(status_code=502, detail="No audio was generated.")
+    with wave.open(output, "wb") as joined:
+        joined.setparams(params)
+        for frame_data in frames:
+            joined.writeframes(frame_data)
+    return output.getvalue()
+
+
 def audio_response(audio: bytes, filename: str):
     # Gemini TTS returns a complete WAV file for non-streaming generation.
     if not audio.startswith(b"RIFF"):
@@ -242,16 +307,17 @@ def make_tts(data: TTSRequest):
     else:
         voice = FEMALE_VOICE
         style = get_style(FEMALE_STYLE, "female", data.style_preset) + " " + pace
-    audio = gemini_audio(
-        data.text,
-        {
-            "languageCode": "hi-IN",
-            "voiceConfig": {
-                "prebuiltVoiceConfig": {"voiceName": voice}
-            },
+    voice_config = {
+        "languageCode": "hi-IN",
+        "voiceConfig": {
+            "prebuiltVoiceConfig": {"voiceName": voice}
         },
-        style,
-    )
+    }
+    # Short independent TTS requests reduce the chance of Gemini drifting,
+    # improvising, or adding unrelated speech during long narration.
+    chunks = split_tts_text(data.text)
+    clips = [gemini_audio(chunk, voice_config, style) for chunk in chunks]
+    audio = join_wav_audio(clips)
     return audio_response(audio, f"nova-hindi-{data.gender}.wav")
 
 
