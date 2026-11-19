@@ -90,21 +90,21 @@ def speed_instruction(rate: str) -> str:
 
 
 HORROR_MALE_STYLE = (
-    "You are narrating a premium Indian YouTube horror movie explanation, not reading a "
-    "plain document. Keep the exact same deep, warm Charon voice identity. Speak fluent, "
-    "natural Indian Hinglish with clear Indian pronunciation and conversational flow. "
-    "Make the listener feel pulled into the film: begin with an intimate mysterious hook, "
-    "build curiosity, then steadily increase tension as danger approaches. Use a rich, "
-    "slightly hushed and ominous tone for Hastar and the hidden treasure; use controlled "
-    "intensity for frightening reveals, never scream or overact. Explain plot details "
-    "clearly and confidently like an experienced movie-explainer host, varying pitch, "
-    "rhythm and emphasis so the narration never sounds flat. Give short natural pauses "
-    "after suspenseful questions, before important reveals, and at paragraph breaks. "
-    "Slow down slightly for emotional moments and the final moral explanation; finish "
-    "with a warm, engaging YouTube outro. Keep words crisp and audible, avoid monotone, "
-    "avoid excessive slowness, and do not invent or speak headings, labels, stage "
-    "directions, or production notes. Read only the actual story narration. No music "
-    "or sound effects."
+    "You are narrating a premium Indian YouTube horror movie explanation. Keep the exact "
+    "same deep, warm Charon voice identity. Speak fluent, natural Indian Hinglish with "
+    "clear Indian pronunciation and a confident, conversational movie-explainer flow. "
+    "IMPORTANT SCRIPT LOCK: speak ONLY the exact words present in the supplied transcript, "
+    "in the same order. Do not add even one word, sentence, greeting, introduction, "
+    "explanation, reaction, filler, summary, transition, outro, or sign-off unless those "
+    "exact words are written in the transcript. Do not invent dialogue or facts. Do not "
+    "repeat, paraphrase, translate, expand, shorten, or complete any sentence. If the "
+    "transcript ends, stop speaking immediately. Never say what you are doing. "
+    "Deliver the written story like an experienced Indian YouTube horror movie host: "
+    "start with the written hook in a mysterious intimate tone, build curiosity and "
+    "tension, and use a controlled ominous tone for Hastar and the hidden treasure. "
+    "Vary pitch, rhythm and emphasis naturally; use short pauses at punctuation and "
+    "paragraph breaks. Keep every word crisp and understandable. Be suspenseful but "
+    "never scream, overact, mumble, or stretch pauses excessively. No music or sound effects."
 )
 
 HORROR_FEMALE_STYLE = (
@@ -126,11 +126,16 @@ def get_style(base_style: str, gender: str, preset: str) -> str:
 def gemini_audio(text: str, voice_config: dict, style: str) -> bytes:
     key = get_api_key()
     prompt = (
-        "TTS the following transcript as natural spoken audio. Follow the director's "
-        "notes for voice, emotion, accent and pacing. Do not read the director's notes "
-        "or the words 'Transcript begins' aloud. Read only the transcript after that label.\n\n"
-        "DIRECTOR'S NOTES:\n" + style + "\n\n"
-        "TRANSCRIPT BEGINS:\n" + text
+        "Generate speech audio from the transcript below. This is a STRICT VERBATIM TTS "
+        "task, not a writing or storytelling task. The transcript is the complete and "
+        "only content to be spoken. Speak every supplied word once, in order, and speak "
+        "nothing that is not in the transcript. Do not add greetings, filler words, "
+        "commentary, explanations, reactions, transitions, summaries, repeated lines, "
+        "or a new ending. Do not omit, rewrite, translate, or improvise any transcript "
+        "content. Stop exactly when the transcript ends. The director notes are silent "
+        "instructions and must never be spoken.\n\n"
+        "DIRECTOR NOTES (DO NOT SPEAK):\n" + style + "\n\n"
+        "EXACT TRANSCRIPT TO SPEAK (AND NOTHING ELSE):\n" + text
     )
     payload = {
         "contents": [{
