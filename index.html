@@ -37,6 +37,7 @@ textarea,select,input{width:100%;border:1px solid #34445e;background:#0a1220;col
 <div class="grid" style="margin-top:16px">
 <div class="field" id="genderWrap"><label for="gender">FIXED VOICE</label><select id="gender"><option value="male">Male · Charon</option><option value="female">Female · Kore</option></select></div>
 <div class="field"><label for="rate">SPEAKING PACE</label><select id="rate"><option value="-10%">Slow and dramatic</option><option value="+0%" selected>Natural</option><option value="+10%">Energetic</option><option value="+20%">Fast</option></select></div>
+<div class="field"><label for="stylePreset">NARRATION STYLE</label><select id="stylePreset"><option value="documentary">Science Documentary</option><option value="horror">Cinematic Horror · Tumbbad</option></select></div>
 </div>
 <div class="voicecards" id="voiceCards">
 <div class="voicecard"><b>♂ MALE · CHARON</b><span>Warm, deep, confident science-documentary narrator. Fixed voice and permanent style prompt.</span></div>
@@ -79,7 +80,7 @@ function isNonSpokenHeading(line,index){
 }
 function makePayload(){
  const text=$("script").value.trim();if(!text)throw Error("Enter your Hindi script first.");
- if(mode==="single")return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value}};
+ if(mode==="single")return {route:"/tts",payload:{text,gender:$("gender").value,rate:$("rate").value,style_preset:$("stylePreset").value}};
  const segments=[],unknown=[];
  text.split(/\r?\n/).forEach((line,index)=>{
   const s=line.trim();if(!s||isNonSpokenHeading(s,index))return;
@@ -92,7 +93,7 @@ function makePayload(){
  });
  if(unknown.length)throw Error("Line "+unknown[0]+" is not labelled MALE:, FEMALE: or BOTH:. Please add a speaker label, or make it a clear heading.");
  if(!segments.length)throw Error("No dialogue found. Add MALE:, FEMALE: or BOTH: before spoken lines.");
- return {route:"/tts/dual",payload:{segments,rate:$("rate").value}};
+ return {route:"/tts/dual",payload:{segments,rate:$("rate").value,style_preset:$("stylePreset").value}};
 }
 async function runTTS(preview){
  let data;try{data=makePayload()}catch(e){status(e.message,"error");return}
